@@ -9,6 +9,7 @@ import UIKit
 
 class HomeViewController: UIViewController {
     
+    private var photosContainer = UIView()
     private var photosCollectionView: HomePhotosCollectionView!
 
     override func viewDidLoad() {
@@ -18,40 +19,67 @@ class HomeViewController: UIViewController {
         navigationItem.leftBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "gear")?.setColor(color: .lightGray), style: .plain, target: self, action: nil)
         title = "Instagram"
         
-        setupCollectionView()
+        setupPhotosCollectionView()
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        photosContainer.roundCorners([.topLeft, .topRight], radius: HomePhotosCell.curveCornerRadius)
     }
 
-    private func setupCollectionView() {
+    private func setupPhotosCollectionView() {
         photosCollectionView = HomePhotosCollectionView(layout: createCompostionalLayout())
-        photosCollectionView.contentInset = UIEdgeInsets(top: HomePhotosCell.curveCornerRadius, left: 0, bottom: 0, right: 0)
+//        photosCollectionView.contentInset = UIEdgeInsets(top: view.frame.height * 0.15, left: 0, bottom: 0, right: 0)
         photosCollectionView.translatesAutoresizingMaskIntoConstraints = false
+        photosContainer.translatesAutoresizingMaskIntoConstraints = false
         
-        view.addSubview(photosCollectionView)
+        view.addSubview(photosContainer)
+        photosContainer.addSubview(photosCollectionView)
+        
+        photosCollectionView.pinToEdges()
         
         NSLayoutConstraint.activate([
-            photosCollectionView.widthAnchor.constraint(equalTo: view.widthAnchor),
-            photosCollectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            photosCollectionView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            photosCollectionView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.75)
+            photosContainer.widthAnchor.constraint(equalTo: view.widthAnchor),
+            photosContainer.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            photosContainer.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            photosContainer.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor)
         ])
     }
 
 }
 
 //MARK: - Custom Collection View Layout (CompositionalLayout)
-extension HomeViewController {
+extension HomeViewController: UICollectionViewDelegate {
     func createCompostionalLayout() -> UICollectionViewLayout {
         let layout = UICollectionViewCompositionalLayout { (sectionIndex, layoutEnv) -> NSCollectionLayoutSection? in
+            
+            if sectionIndex == 0 {
+                let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(1))
+                let item = NSCollectionLayoutItem(layoutSize: itemSize)
 
-            let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(1))
-            let item = NSCollectionLayoutItem(layoutSize: itemSize)
-            item.contentInsets = NSDirectionalEdgeInsets(top: -(HomePhotosCell.curveCornerRadius), leading: 0, bottom: 0, trailing: 0)
+                let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(0.22), heightDimension: .fractionalWidth(0.22))
+                let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
+                group.contentInsets = NSDirectionalEdgeInsets(top: 15, leading: 0, bottom: 0, trailing: 15)
 
-            let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(0.7))
-            let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
 
-            let section = NSCollectionLayoutSection(group: group)
-            return section
+                let section = NSCollectionLayoutSection(group: group)
+                section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: HomePhotosCell.curveCornerRadius, bottom: HomePhotosCell.curveCornerRadius * 2.5, trailing: HomePhotosCell.curveCornerRadius)
+
+                section.orthogonalScrollingBehavior = .continuous
+                return section
+            } else {
+                let itemSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(1))
+                let item = NSCollectionLayoutItem(layoutSize: itemSize)
+                item.contentInsets = NSDirectionalEdgeInsets(top: -(HomePhotosCell.curveCornerRadius), leading: 0, bottom: 0, trailing: 0)
+
+                let groupSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1), heightDimension: .fractionalHeight(0.55))
+                let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+
+                let section = NSCollectionLayoutSection(group: group)
+                return section
+            }
+            
         }
 
         return layout
